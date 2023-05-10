@@ -1,4 +1,5 @@
 const axios = require ('axios');
+const { genres } = require('./Genres');
 require('dotenv').config();
 const {API_KEY} = process.env
 
@@ -15,8 +16,15 @@ const games = async (req,res)=>{
             }
         });
 
-       const VideoGames=data.results;
-
+        const VideoGames=data.results.map ( videogame =>({
+            id : videogame.id,
+            name : videogame.name,
+            description:videogame.description,
+             platforms:videogame.platforms.map(platform => platform.platform.name),
+             background_image:videogame.background_image,
+             releaseDate:videogame.releaseDate,
+             rating:videogame.rating,
+             genres:videogame.genres.map(genre=> genre.id)}));
        return res.status (200).json (VideoGames);
     }catch (error){
         console.error(error);
