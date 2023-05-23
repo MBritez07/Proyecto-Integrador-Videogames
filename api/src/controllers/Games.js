@@ -22,17 +22,25 @@ const Games = async (req, res) => {
 
     const allVideoGames = [...data.results.slice(0, 100), ...dbVideoGames];//Combina ambos resultados
     //obtiene un total de 100 videojuegos.
-    const videoGames = allVideoGames.map(async videogame => {//Para cada videojuego,
-      // se realizan consultas adicionales a los modelos Genres y Platforms 
-      //para obtener los nombres correspondientes utilizando los ID almacenados
-      const genres = videogame.genres ? await Genres.findAll({
-        where: { id: videogame.genres.map(genre => genre.id) },
-        attributes: ['name']
-    }) : [];
-    const platforms = videogame.platforms ? await Platforms.findAll({
-        where: { id: videogame.platforms.map(platform => platform.id) },
-        attributes: ['name']
-    }) : [];
+    const videoGames = await Promise.all(allVideoGames.map(async (videogame) => {
+      const genres = videogame.genres
+        ? await Genres.findAll({
+            where: { id: videogame.genres.map((genre) => genre.id) },
+            attributes: ['name'],
+          })
+        : [];
+        
+      const platforms = videogame.platforms
+        ? await Platforms.findAll({
+            where: {
+              id: videogame.platforms.map((platform) =>
+                platform.platform ? platform.platform.id : platform.id
+              ),
+            },
+            attributes: ['name'],
+          })
+        : [];
+        
       return {
         id: videogame.id,
         name: videogame.name,
@@ -40,14 +48,14 @@ const Games = async (req, res) => {
         released: videogame.released,
         rating: videogame.rating,
         imagen: videogame.background_image,
-        platforms: platforms.map(platform => platform.name),
-        genres: genres.map(genre => genre.name)
+        platforms: platforms.map((platform) => platform.name),
+        genres: genres.map((genre) => genre.name),
       };
-    });
+    }));
     
-    const LallvideoGames = await Promise.all(videoGames);// espera a que todas las promesas en videoGames se resuelvan.
+    const allvideoGames = await Promise.all(videoGames);// espera a que todas las promesas en videoGames se resuelvan.
      //Una vez que todas las promesas se han resuelto, se obtiene un array de los resultados y se asigna a la variable LallvideoGames
-    return res.status(200).json(LallvideoGames);
+    return res.status(200).json(allvideoGames);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Error en el servidor' });
